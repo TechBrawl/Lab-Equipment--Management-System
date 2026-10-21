@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabOS Manager - Borrowing & Issuing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-light-core: #f8fafc; 
+            --bg-card: rgba(255, 255, 255, 0.85); 
+            --border-glass: rgba(226, 232, 240, 0.8); 
+            --accent-primary: #4f46e5; 
+            --accent-success: #16a34a; 
+            --accent-danger: #dc2626;  
+            --text-main: #1e293b; 
+            --text-muted: #64748b; 
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background-color: var(--bg-light-core);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(148, 163, 184, 0.08);
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            border-right: 1px solid var(--border-glass);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 2.25rem;
+            min-height: 100vh;
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-bottom: 0.25rem;
+            transition: var(--transition-smooth);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-link-custom:hover, .nav-link-custom.active {
+            background: rgba(79, 70, 229, 0.08);
+            color: var(--accent-primary);
+        }
+        
+        .nav-link-custom.active {
+            background: rgba(79, 70, 229, 0.1);
+            font-weight: 600;
+        }
+
+        /* Custom styling for the clean tabs */
+        .nav-tabs {
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 0;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            margin-bottom: -2px;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-tabs .nav-link:hover {
+            border-color: transparent;
+            color: var(--text-main);
+        }
+        .nav-tabs .nav-link.active {
+            background: transparent;
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .custom-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.6px;
+            border-bottom: 2px solid #f1f5f9;
+            padding: 1rem;
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+        .custom-table td {
+            padding: 1.1rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+            <i class="bi bi-palette2 text-primary fs-3" style="color: var(--accent-primary) !important;"></i>
+            <span class="fw-bold fs-5 tracking-tight text-dark">LabOS Manager</span>
+        </div>
+        
+        <nav class="flex-grow-1">
+            <a href="{% url 'home' %}" class="nav-link-custom"><i class="bi bi-grid-1x2-fill"></i> System Dashboard</a>
+            <a href="{% url 'equipment_registry' %}" class="nav-link-custom"><i class="bi bi-box-seam"></i> Equipment Registry</a>
+            <a href="{% url 'borrow_issue' %}" class="nav-link-custom active"><i class="bi bi-arrow-left-right"></i> Borrow & Issue</a>
+            <a href="{% url 'maintenance_desk' %}" class="nav-link-custom"><i class="bi bi-tools"></i> Maintenance Desk</a>
+            <a href="{% url 'reports_analytics' %}" class="nav-link-custom"><i class="bi bi-clipboard-data"></i> Reports & Analytics</a>
+            <a href="{% url 'inventory_tracking' %}" class="nav-link-custom"><i class="bi bi-qr-code-scan"></i> Inventory Tracking</a>
+            <hr class="my-3 text-secondary opacity-25">
+            <a href="{% url 'settings_admin' %}" class="nav-link-custom"><i class="bi bi-sliders2"></i> Settings & Admin</a>
+        </nav>
+
+        <div class="mt-auto pt-3 border-top border-light d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle fw-bold text-uppercase" style="width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; font-size:13px;">
+                    {{ request.user.email|slice:":2" }}
+                </div>
+                <div style="line-height: 1.2;">
+                    <div class="fw-bold text-dark" style="font-size: 13px;">{{ request.user.get_role_display }}</div>
+                    <span class="text-muted" style="font-size: 11px; max-width: 140px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ request.user.email }}</span>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="text-danger fs-5" title="Sign Out"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <header class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h1 class="h3 fw-bold text-dark m-0">Borrowing & Issuing Deck</h1>
+                <p class="text-muted small m-0">Process pending equipment approvals, authorize handovers, and track due dates.</p>
+            </div>
+            <div>
+                <a href="{% url 'print_issue_slip' %}" target="_blank" class="btn btn-outline-secondary btn-sm bg-white px-3 shadow-sm border-light-subtle text-dark text-decoration-none">
+                    <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Print Issue Slip
+                </a>
+            </div>
+        </header>
+
+        <div class="row g-4">
+            
+            <div class="col-12 col-xl-8">
+                <div class="glass-panel bg-white h-100 p-0 overflow-hidden d-flex flex-column">
+                    
+                    <ul class="nav nav-tabs px-3 pt-2" id="borrowTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-pane" type="button" role="tab">
+                                <i class="bi bi-hourglass-split me-1"></i> Pending Requests ({{ pending_requests.count }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-pane" type="button" role="tab">
+                                <i class="bi bi-arrow-left-right me-1"></i> Active Handovers
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content flex-grow-1" id="borrowTabsContent">
+                        
+                        <div class="tab-pane fade show active p-4" id="pending-pane" role="tabpanel" aria-labelledby="pending-tab">
+                            <div class="table-responsive">
+                                <table class="table custom-table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Requester / Faculty</th>
+                                            <th>Requested Equipment</th>
+                                            <th>Expected Date</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for req in pending_requests %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ req.faculty_member }}</div>
+                                                <span class="text-muted small">Dept. Request</span> 
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ req.equipment.name }}</div>
+                                                <span class="text-muted small">ID: #{{ req.equipment.equipment_id }}</span>
+                                            </td>
+                                            <td class="text-dark small">
+                                                {% if req.due_date %}{{ req.due_date|date:"d-M-Y" }}{% else %}Not specified{% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="{% url 'approve_borrow' req.id %}" class="btn btn-sm btn-success px-3 py-1 shadow-sm me-1" style="background-color: var(--accent-success); border:none;">
+                                                    <i class="bi bi-check-lg me-1"></i> Approve
+                                                </a>
+                                                <a href="{% url 'reject_borrow' req.id %}" class="btn btn-sm btn-outline-danger px-2 py-1">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-5">
+                                                <i class="bi bi-check2-circle fs-3 d-block mb-3 text-success opacity-50"></i>
+                                                Queue is clear. No pending requests.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade p-4" id="active-pane" role="tabpanel" aria-labelledby="active-tab">
+                            <div class="table-responsive">
+                                <table class="table custom-table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Requester / Faculty</th>
+                                            <th>Deployed Equipment</th>
+                                            <th>Status</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for req in active_handovers %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ req.faculty_member }}</div>
+                                                <span class="text-muted small">Assigned by: {{ req.processed_by.email|default:"System"|slice:":8" }}..</span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ req.equipment.name }}</div>
+                                                <span class="text-muted small">ID: #{{ req.equipment.equipment_id }}</span>
+                                            </td>
+                                            <td>
+                                                {% if req.status == 'APPROVED' %}
+                                                    <span class="badge bg-info bg-opacity-10 text-info px-2 py-1">Awaiting Pickup</span>
+                                                {% elif req.status == 'OVERDUE' %}
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1">Overdue</span>
+                                                {% else %}
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1">{{ req.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+    <a href="{% url 'log_return' req.id %}" class="btn btn-sm btn-outline-secondary px-3 py-1 text-muted shadow-sm hover-primary">
+        <i class="bi bi-box-arrow-in-down me-1"></i> Log Return
+    </a>
+</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-5">
+                                                <i class="bi bi-box-seam fs-3 d-block mb-3 text-secondary opacity-50"></i>
+                                                No active deployments or overdues right now.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                
+                <div class="glass-panel bg-white p-4 mb-4">
+                    <h2 class="h5 fw-bold text-dark mb-2"><i class="bi bi-lightning-charge-fill me-2" style="color:var(--accent-primary)"></i>Instant Desk Handover</h2>
+                    <p class="text-muted small mb-4">Manually bypass web queues to issue assets to a user instantly via local barcode validation.</p>
+                    
+                    <form action="{% url 'borrow_issue' %}" method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Input Equipment ID</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light border-end-0 text-muted" style="border-color: #e2e8f0;"><i class="bi bi-qr-code-scan"></i></span>
+                                <input type="text" name="equipment_id" class="form-control border-start-0 text-dark bg-white" placeholder="e.g. #EQ-OSC-0941" required style="border-color: #e2e8f0;">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Borrower ID / Roll Number</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-light border-end-0 text-muted" style="border-color: #e2e8f0;"><i class="bi bi-person"></i></span>
+                                <input type="text" name="borrower_id" class="form-control border-start-0 text-dark bg-white" placeholder="e.g. CSE-2024-012" required style="border-color: #e2e8f0;">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dark">Return Milestone Date</label>
+                            <div class="input-group shadow-sm">
+                                <input type="date" name="return_date" class="form-control text-dark bg-white" required style="border-color: #e2e8f0;">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm py-2" style="background-color: var(--accent-primary); border:none;">
+                            <i class="bi bi-arrow-right-circle me-2"></i>Authorize Direct Issue
+                        </button>
+                    </form>
+                </div>
+
+                <div class="glass-panel bg-white p-4">
+                    <h3 class="small fw-bold text-dark mb-3">System Clearance Performance</h3>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Active Deployments:</span>
+                        <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ active_deployments_count }} Units</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Unreturned/Overdue Risk:</span>
+                        <span class="fw-bold text-danger" style="font-size: 0.9rem;">{{ overdue_risk_count }} Units</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

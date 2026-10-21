@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabOS Manager - Maintenance & Servicing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-light-core: #f8fafc; 
+            --bg-card: rgba(255, 255, 255, 0.85); 
+            --border-glass: rgba(226, 232, 240, 0.8); 
+            --accent-primary: #4f46e5; 
+            --accent-success: #16a34a; 
+            --accent-warning: #ea580c; 
+            --accent-danger: #dc2626;  
+            --text-main: #1e293b; 
+            --text-muted: #64748b; 
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background-color: var(--bg-light-core);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(148, 163, 184, 0.08);
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            border-right: 1px solid var(--border-glass);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 2.25rem;
+            min-height: 100vh;
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-bottom: 0.25rem;
+            transition: var(--transition-smooth);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-link-custom:hover, .nav-link-custom.active {
+            background: rgba(79, 70, 229, 0.08);
+            color: var(--accent-primary);
+        }
+        
+        .nav-link-custom.active {
+            background: rgba(79, 70, 229, 0.1);
+            font-weight: 600;
+        }
+
+        .custom-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.6px;
+            border-bottom: 2px solid #f1f5f9;
+            padding: 1rem;
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+        .custom-table td {
+            padding: 1.1rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+            <i class="bi bi-palette2 text-primary fs-3" style="color: var(--accent-primary) !important;"></i>
+            <span class="fw-bold fs-5 tracking-tight text-dark">LabOS Manager</span>
+        </div>
+        
+        <nav class="flex-grow-1">
+            <a href="{% url 'home' %}" class="nav-link-custom"><i class="bi bi-grid-1x2-fill"></i> System Dashboard</a>
+            <a href="{% url 'equipment_registry' %}" class="nav-link-custom"><i class="bi bi-box-seam"></i> Equipment Registry</a>
+            <a href="{% url 'borrow_issue' %}" class="nav-link-custom"><i class="bi bi-arrow-left-right"></i> Borrow & Issue</a>
+            <a href="{% url 'maintenance_desk' %}" class="nav-link-custom active"><i class="bi bi-tools"></i> Maintenance Desk</a>
+            <a href="{% url 'reports_analytics' %}" class="nav-link-custom"><i class="bi bi-clipboard-data"></i> Reports & Analytics</a>
+            <a href="{% url 'inventory_tracking' %}" class="nav-link-custom"><i class="bi bi-qr-code-scan"></i> Inventory Tracking</a>
+            <hr class="my-3 text-secondary opacity-25">
+            <a href="{% url 'settings_admin' %}" class="nav-link-custom"><i class="bi bi-sliders2"></i> Settings & Admin</a>
+        </nav>
+
+        <div class="mt-auto pt-3 border-top border-light d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle fw-bold text-uppercase" style="width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; font-size:13px;">
+                    {{ request.user.email|slice:":2" }}
+                </div>
+                <div style="line-height: 1.2;">
+                    <div class="fw-bold text-dark" style="font-size: 13px;">{{ request.user.get_role_display }}</div>
+                    <span class="text-muted" style="font-size: 11px; max-width: 140px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ request.user.email }}</span>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="text-danger fs-5" title="Sign Out"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <header class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h1 class="h3 fw-bold text-dark m-0">Maintenance & Servicing Desk</h1>
+                <p class="text-muted small m-0">Track device calibration routines, log faulty components, and coordinate with active vendors.</p>
+            </div>
+            <div>
+              <button class="btn btn-outline-secondary btn-sm bg-white px-3 shadow-sm border-light-subtle" data-bs-toggle="modal" data-bs-target="#vendorModal">
+                <i class="bi bi-truck me-2 text-primary"></i>Service Vendors
+            </button>
+            </div>
+        </header>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-xl-3">
+                <div class="metric-card">
+                    <span class="d-block text-muted small mb-2">Under Inspection</span>
+                    <h4 class="fw-bold m-0"><span style="color: #eab308;">&bull;</span> {{ under_inspection }} Units</h4>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric-card">
+                    <span class="d-block text-muted small mb-2">Sent to Vendor</span>
+                    <h4 class="fw-bold m-0"><span style="color: #ef4444;">&bull;</span> {{ sent_to_vendor }} Unit{{ sent_to_vendor|pluralize }}</h4>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric-card">
+                    <span class="d-block text-muted small mb-2">Calibrated This Month</span>
+                    <h4 class="fw-bold m-0 text-success"><span style="color: #22c55e;">&bull;</span> {{ calibrated_this_month }} Units</h4>
+                </div>
+            </div>
+            <div class="col-6 col-xl-3">
+                <div class="metric-card">
+                    <span class="d-block text-muted small mb-2">Total Maintenance Cost</span>
+                    <h4 class="fw-bold m-0" style="color: var(--accent-primary);">₹{{ total_cost|floatformat:"0" }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            
+            <div class="col-12 col-xl-8">
+                <div class="glass-panel p-4 h-100 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 fw-bold text-dark m-0">
+                            <i class="bi bi-card-checklist me-2 text-muted"></i>Active Servicing Streams
+                        </h2>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2.5 py-1">Realtime Tracker</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table custom-table align-middle m-0">
+                            <thead>
+                                <tr>
+                                    <th>Equipment / ID</th>
+                                    <th>Reported Failure</th>
+                                    <th>Assigned Vendor</th>
+                                    <th>Status Flow</th>
+                                    <th class="text-end">Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in active_streams %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ alert.equipment.name }}</div>
+                                        <span class="text-muted small">ID: #{{ alert.equipment.equipment_id }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">
+                                            {% if alert.description|length > 25 %}{{ alert.description|truncatechars:25 }}{% else %}{{ alert.description|default:"Unspecified Error" }}{% endif %}
+                                        </div>
+                                        <span class="text-muted small">Logged: {{ alert.date_reported|timesince }} ago</span>
+                                    </td>
+                                    <td class="text-muted small">
+                                        {{ alert.assigned_vendor|default:"Internal Tech Staff" }}
+                                    </td>
+                                    <td>
+                                        {% if alert.status_flow == 'INSPECTION' or alert.status_flow == 'DIAGNOSTICS' %}
+                                            <span class="badge bg-warning bg-opacity-10 px-2 py-1" style="color: #b45309 !important;">{{ alert.get_status_flow_display }}</span>
+                                        {% elif alert.status_flow == 'VENDOR' %}
+                                            <span class="badge bg-danger bg-opacity-10 px-2 py-1 text-danger">Out at Repair</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary bg-opacity-10 px-2 py-1 text-secondary">{{ alert.get_status_flow_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'resolve_maintenance' alert.id %}" class="btn btn-sm btn-outline-success px-3 py-1 fw-medium" style="font-size: 0.85rem;">
+                                            <i class="bi bi-check-lg me-1"></i> Complete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="bi bi-clipboard-check fs-3 d-block mb-3 text-success opacity-50"></i>
+                                        All equipment operational. No active servicing streams.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                <div class="glass-panel bg-white p-4 h-100">
+                    <h2 class="h5 fw-bold text-dark mb-2">
+                        <i class="bi bi-plus-circle-fill me-2" style="color:var(--accent-primary)"></i>Log Breakage Event
+                    </h2>
+                    <p class="text-muted small mb-4">Quick-submit system reports when a structural asset breaks down during student practical loops.</p>
+                    
+                    <form action="{% url 'maintenance_desk' %}" method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Equipment Serial Code</label>
+                            <input type="text" name="equipment_id" class="form-control text-dark bg-white shadow-sm" placeholder="e.g. #EQ-MCU-1102" required style="border-color: #e2e8f0;">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Urgency Matrix Category</label>
+                            <select name="urgency_category" class="form-select text-dark bg-white shadow-sm" required style="border-color: #e2e8f0;">
+                                <option value="ROUTINE" selected>Routine Recalibration</option>
+                                <option value="MINOR">Minor Component Issue</option>
+                                <option value="CRITICAL">Critical Structural Failure</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dark">Failure Structural Notes</label>
+                            <textarea name="failure_notes" class="form-control text-dark bg-white shadow-sm" rows="3" placeholder="Describe component behavior or error telemetry text details..." required style="border-color: #e2e8f0; resize: none;"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm py-2" style="background-color: var(--accent-primary); border:none;">
+                            <i class="bi bi-file-earmark-text me-2"></i>File Maintenance Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+    <div class="modal fade" id="vendorModal" tabindex="-1" aria-labelledby="vendorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(8px);">
+                
+                <div class="modal-header border-bottom border-light p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 p-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                            <i class="bi bi-journal-bookmark-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark m-0" id="vendorModalLabel">Service Vendor Directory</h5>
+                            <small class="text-muted">Manage external repair contractors and calibration experts</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <ul class="nav nav-tabs px-4 pt-3" id="vendorTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold text-muted border-0 bg-transparent pb-3" id="directory-tab" data-bs-toggle="tab" data-bs-target="#directory-pane" type="button" role="tab" style="border-bottom: 2px solid transparent;">
+                                <i class="bi bi-card-list me-1"></i> Active Roster
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold text-muted border-0 bg-transparent pb-3" id="add-vendor-tab" data-bs-toggle="tab" data-bs-target="#add-vendor-pane" type="button" role="tab" style="border-bottom: 2px solid transparent;">
+                                <i class="bi bi-plus-circle me-1"></i> Register New
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content p-4 bg-light bg-opacity-50" id="vendorTabsContent" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; min-height: 350px;">
+                        
+                        <div class="tab-pane fade show active" id="directory-pane" role="tabpanel">
+                            <div class="row g-3">
+                                {% for vendor in vendors %}
+                                <div class="col-md-6">
+                                    <div class="bg-white p-3 rounded-3 shadow-sm border border-light-subtle h-100">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold text-dark m-0">{{ vendor.company_name }}</h6>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 10px;">{{ vendor.specialty }}</span>
+                                        </div>
+                                        <hr class="my-2 border-secondary opacity-10">
+                                        <div class="text-muted small mb-1"><i class="bi bi-person-badge me-2"></i>{{ vendor.contact_person }}</div>
+                                        <div class="text-muted small mb-1"><i class="bi bi-telephone me-2"></i>{{ vendor.phone }}</div>
+                                        <div class="text-muted small"><i class="bi bi-envelope me-2"></i>{{ vendor.email }}</div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12 text-center py-5">
+                                    <i class="bi bi-journal-x fs-1 text-secondary opacity-25 d-block mb-2"></i>
+                                    <span class="text-muted small">No external vendors currently registered in the system.</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="add-vendor-pane" role="tabpanel">
+                            <form action="{% url 'add_vendor' %}" method="POST" class="bg-white p-4 rounded-3 shadow-sm border border-light-subtle">
+                                {% csrf_token %}
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Company Name</label>
+                                        <input type="text" name="company_name" class="form-control" placeholder="e.g. Matrix Labs Corp" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Primary Specialty</label>
+                                        <input type="text" name="specialty" class="form-control" placeholder="e.g. Optical Calibration" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label small fw-bold text-dark">Contact Person</label>
+                                        <input type="text" name="contact_person" class="form-control" placeholder="e.g. Jane Doe" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Phone Number</label>
+                                        <input type="text" name="phone" class="form-control" placeholder="+91 9876543210" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Email Address</label>
+                                        <input type="email" name="email" class="form-control" placeholder="service@matrixlabs.com" required>
+                                    </div>
+                                    
+                                    <div class="col-12 mt-4 text-end border-top pt-3">
+                                        <button type="submit" class="btn btn-primary px-4 fw-semibold" style="background-color: var(--accent-primary); border:none;">
+                                            <i class="bi bi-building-add me-1"></i> Register Vendor
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .nav-tabs .nav-link.active {
+            color: var(--accent-primary) !important;
+            border-bottom-color: var(--accent-primary) !important;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

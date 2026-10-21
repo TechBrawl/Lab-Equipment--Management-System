@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabOS Manager - Reports & Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-light-core: #f8fafc; 
+            --bg-card: rgba(255, 255, 255, 0.85); 
+            --border-glass: rgba(226, 232, 240, 0.8); 
+            --accent-primary: #4f46e5; 
+            --accent-success: #16a34a; 
+            --accent-warning: #ea580c; 
+            --accent-danger: #dc2626;  
+            --text-main: #1e293b; 
+            --text-muted: #64748b; 
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background-color: var(--bg-light-core);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(148, 163, 184, 0.08);
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            border-right: 1px solid var(--border-glass);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 2.25rem;
+            min-height: 100vh;
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-bottom: 0.25rem;
+            transition: var(--transition-smooth);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-link-custom:hover, .nav-link-custom.active {
+            background: rgba(79, 70, 229, 0.08);
+            color: var(--accent-primary);
+        }
+        
+        .nav-link-custom.active {
+            background: rgba(79, 70, 229, 0.1);
+            font-weight: 600;
+        }
+
+        .custom-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.6px;
+            border-bottom: 2px solid #f1f5f9;
+            padding: 1rem;
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+        
+        .custom-table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            height: 100%;
+        }
+        
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="d-flex align-items-center gap-2 mb-4 px-2">
+            <i class="bi bi-palette2 text-primary fs-3" style="color: var(--accent-primary) !important;"></i>
+            <span class="fw-bold fs-5 tracking-tight text-dark">LabOS Manager</span>
+        </div>
+        
+        <nav class="flex-grow-1">
+            <a href="{% url 'home' %}" class="nav-link-custom"><i class="bi bi-grid-1x2-fill"></i> System Dashboard</a>
+            <a href="{% url 'equipment_registry' %}" class="nav-link-custom"><i class="bi bi-box-seam"></i> Equipment Registry</a>
+            <a href="{% url 'borrow_issue' %}" class="nav-link-custom"><i class="bi bi-arrow-left-right"></i> Borrow & Issue</a>
+            <a href="{% url 'maintenance_desk' %}" class="nav-link-custom"><i class="bi bi-tools"></i> Maintenance Desk</a>
+            <a href="{% url 'reports_analytics' %}" class="nav-link-custom active"><i class="bi bi-clipboard-data"></i> Reports & Analytics</a>
+            <a href="{% url 'inventory_tracking' %}" class="nav-link-custom"><i class="bi bi-qr-code-scan"></i> Inventory Tracking</a>
+            <hr class="my-3 text-secondary opacity-25">
+            <a href="{% url 'settings_admin' %}" class="nav-link-custom"><i class="bi bi-sliders2"></i> Settings & Admin</a>
+        </nav>
+
+        <div class="mt-auto pt-3 border-top border-light d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle fw-bold text-uppercase" style="width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; font-size:13px;">
+                    {{ request.user.email|slice:":2" }}
+                </div>
+                <div style="line-height: 1.2;">
+                    <div class="fw-bold text-dark" style="font-size: 13px;">{{ request.user.get_role_display }}</div>
+                    <span class="text-muted" style="font-size: 11px; max-width: 140px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ request.user.email }}</span>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="text-danger fs-5" title="Sign Out"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <header class="mb-4">
+            <h1 class="h3 fw-bold text-dark m-0">Reports & Data Analytics</h1>
+            <p class="text-muted small m-0">Review system metrics, utilization patterns, cumulative maintenance expenditures, and faculty history profiles.</p>
+        </header>
+
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-xl-4">
+                <div class="metric-card">
+                    <div>
+                        <span class="d-block text-muted small mb-1">Overall Utilization Rate</span>
+                        <h2 class="fw-bold m-0 text-dark">{{ utilization_rate }}%</h2>
+                    </div>
+                    <div class="metric-icon text-primary bg-primary bg-opacity-10">
+                        <i class="bi bi-pie-chart-fill"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-xl-4">
+                <div class="metric-card">
+                    <div>
+                        <span class="d-block text-muted small mb-1">Overdue Return Frequency</span>
+                        <h2 class="fw-bold m-0 text-danger">{{ overdue_freq }}%</h2>
+                    </div>
+                    <div class="metric-icon text-danger bg-danger bg-opacity-10">
+                        <i class="bi bi-graph-down-arrow"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-xl-4">
+                <div class="metric-card">
+                    <div>
+                        <span class="d-block text-muted small mb-1">Total Calibrated Systems</span>
+                        <h2 class="fw-bold m-0 text-success">{{ calibrated_systems }} Units</h2>
+                    </div>
+                    <div class="metric-icon text-success bg-success bg-opacity-10">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            
+            <div class="col-12 col-xl-8">
+                <div class="glass-panel bg-white p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 fw-bold text-dark m-0">Generated Log Subsets</h2>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 px-2.5 py-1">Active Database</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table custom-table align-middle m-0">
+                            <thead>
+                                <tr>
+                                    <th>Report Metric Context</th>
+                                    <th>Data Scope</th>
+                                    <th>Last Run Time</th>
+                                    <th class="text-end">Verification</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">Utilization Report</div>
+                                        <span class="text-muted small">Tracks breakdown of high-demand gear setups</span>
+                                    </td>
+                                    <td class="fw-medium text-dark small">All Lab Stations</td>
+                                    <td class="text-muted small">1 Hour ago</td>
+                                    <td class="text-end text-success fw-medium small">
+                                        <i class="bi bi-shield-check me-1"></i>Compiled
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">Overdue Frequency Matrix</div>
+                                        <span class="text-muted small">Flags unreturned student and department blocks</span>
+                                    </td>
+                                    <td class="fw-medium text-dark small">Current Semester</td>
+                                    <td class="text-muted small">Yesterday</td>
+                                    <td class="text-end text-success fw-medium small">
+                                        <i class="bi bi-shield-check me-1"></i>Compiled
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">Maintenance & Cost Analysis</div>
+                                        <span class="text-muted small">Calculates vendor calibration fees and invoices</span>
+                                    </td>
+                                    <td class="fw-medium text-dark small">Fiscal Cycle 2026</td>
+                                    <td class="text-muted small">01-Jun-2026</td>
+                                    <td class="text-end text-success fw-medium small">
+                                        <i class="bi bi-shield-check me-1"></i>Compiled
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">Faculty History Ledger</div>
+                                        <span class="text-muted small">Logs complete issuance logs maps per professor</span>
+                                    </td>
+                                    <td class="fw-medium text-dark small">Global Profiles</td>
+                                    <td class="text-muted small">12 Days ago</td>
+                                    <td class="text-end fw-medium small" style="color: #d97706;">
+                                        <i class="bi bi-exclamation-circle me-1"></i>Outdated
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+                <div class="glass-panel bg-white p-4 h-100">
+                    <h2 class="h5 fw-bold text-dark mb-2">
+                        <i class="bi bi-download me-2" style="color:var(--accent-primary)"></i>Data Export Core
+                    </h2>
+                    <p class="text-muted small mb-4">Select system variables to construct compiled document sets for physical print distributions.</p>
+                    
+                    <form action="{% url 'reports_analytics' %}" method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dark">Target Metric Context</label>
+                            <select name="target_metric" class="form-select text-dark bg-white shadow-sm" required style="border-color: #e2e8f0;">
+                                <option value="utilization" selected>Utilization Overview Logs</option>
+                                <option value="overdue">Overdue Frequency Matrix</option>
+                                <option value="maintenance">Maintenance & Cost Analysis</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dark">Temporal Range Scope</label>
+                            <select name="time_range" class="form-select text-dark bg-white shadow-sm" required style="border-color: #e2e8f0;">
+                                <option value="semester" selected>Current Active Semester Loop</option>
+                                <option value="month">Current Month</option>
+                                <option value="fiscal_year">Fiscal Cycle 2026</option>
+                                <option value="all_time">All-Time Global Data</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-dark mb-3">Output Target Template Format</label>
+                            
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="output_format" id="formatPDF" value="pdf">
+                                    <label class="form-check-label text-dark small fw-medium" for="formatPDF">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-1"></i> Document PDF
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="output_format" id="formatCSV" value="csv" checked>
+                                    <label class="form-check-label text-dark small fw-medium" for="formatCSV">
+                                        <i class="bi bi-file-earmark-spreadsheet text-success me-1"></i> Raw Data CSV
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm py-2 mt-2" style="background-color: var(--accent-primary); border:none;">
+                            <i class="bi bi-cloud-arrow-down-fill me-2"></i>Generate & Download Asset Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
